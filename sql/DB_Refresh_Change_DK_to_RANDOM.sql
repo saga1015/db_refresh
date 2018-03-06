@@ -1,11 +1,13 @@
-set search_path=db_refresh;
-set allow_system_table_mods="DML";
-
-update gp_distribution_policy D
-  SET attrnums = NULL
-FROM save_table_distrib_key R
-where D.localoid = R.reloid
-and dump_timestampkey = :v_dump_timestampkey
-and schema_name <> 'db_refresh'
-and distrib_column_list <> 'RANDOMLY';
-reset allow_system_table_mods;
+select distinct
+   'alter table ' || quote_ident(schema_name) || '.' || quote_ident(table_name) || ' set distributed randomly;'
+from
+   pg_class c
+   inner join pg_namespace n
+      on c.relnamespace = n.oid
+   inner join db_refresh.save_table_distrib_key tab
+      on tab.schema_name = n.nspname
+         and tab.table_name = c.relname
+where
+   distrib_column_list <> 'RANDOMLY'::text
+   and dump_timestampkey = :v_dump_timestampkey
+order by 1

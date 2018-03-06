@@ -455,8 +455,17 @@ echo `date +%Y-%m-%d" "%T ` 'Step 10: Change the distribution of the restored ta
 str_Qry=${str_Dir_Sql}/DB_Refresh_Change_DK_to_RANDOM.sql
 date_deb=`date +%Y-%m-%d" "%T"."%N`
 
-psql -1 -d ${str_Target_DB} -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -f ${str_Qry}  >/dev/null
+str_Output=${str_Dir_Log}/dktorandom_${str_Timestamp_Key}.log
+str_Err=${str_Dir_Log}/dktorandom_${str_Timestamp_Key}.err
+
+psql -1 -tXq -f ${str_Qry} -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -d ${str_Target_DB} | xargs  -P ${int_Nb_Thread} -d"\n"  -n 1 -I{} psql -a -d ${str_Target_DB} -c >${str_Output} 2>${str_Err} {}
+
 rc_qry=$?
+
+if [ -s ${str_Err} ]
+then
+	echo "WARNING: Errors or warnings occured during changing distribution to RANDOMLY. Review ${str_Err}"
+fi
 
 f_trace $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
 
