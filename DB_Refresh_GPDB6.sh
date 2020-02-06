@@ -246,7 +246,7 @@ else
    flag_COMPRESS=0
 fi
 
-# Prepare list of dump files with data into delimited file that will be loaded in db_refresh schema
+# Prepare list of dump files with data into delimeted file that will be loaded in db_refresh schema
 str_Output=${str_Dir_Temp}/list_dump_file_${str_Timestamp_Key}.dat
 
 if [[ "${str_Master_Dumpfile}" == gp_dump_1_1_* ]];
@@ -297,16 +297,19 @@ then
 	gpdbrestore -t ${str_Timestamp_Key} -L --ddboost --redirect ${str_Target_DB}                          > ${str_Output_Tmp}
 else
 	# remove db_dumps subfolder from root path
-	gpdbrestore -t ${str_Timestamp_Key} -L -u ${str_Dir_Dump_Root/\/db_dumps*}  --redirect ${str_Target_DB} > ${str_Output_Tmp}
+	#gpdbrestore -t ${str_Timestamp_Key} -L -u ${str_Dir_Dump_Root/\/db_dumps*}  --redirect ${str_Target_DB} > ${str_Output_Tmp}
+	str_Qry=${str_Dir_Sql}/DB_Refresh_list_tables.sql
+	psql -AXt -d ${str_Target_DB} -f ${str_Qry} > ${str_Output}
+	sed -i "s/^/${str_Timestamp_Key}|/"  ${str_Output}
 fi
 rc_qry=$?
 f_trace_error_exit $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
 
-chmod 777 ${str_Output_Tmp}
-grep ":-Table " ${str_Output_Tmp} | sed -e "s/^/&${str_Timestamp_Key}|/g"	>	${str_Output}
+#chmod 777 ${str_Output_Tmp}
+#grep ":-Table " ${str_Output_Tmp} | sed -e "s/^/&${str_Timestamp_Key}|/g"	>	${str_Output}
 
-rc_qry=$?
-f_trace_error_exit $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
+#rc_qry=$?
+#f_trace_error_exit $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
 
 chmod 777 ${str_Output}
 int_Nb_Tables=`cat ${str_Output}|wc -l`
@@ -478,13 +481,13 @@ if [ "${flag_DDBOOST}" == "1" ]
 then
 	str_Qry=${str_Dir_Sql}/DB_Refresh_Restore_Script_Ddboost.sql
 else
-	str_Qry=${str_Dir_Sql}/DB_Refresh_Restore_Script.sql
+	str_Qry=${str_Dir_Sql}/DB_Refresh_Restore_Script_GPDB6.sql
 fi
 str_Output=${str_Dir_Temp}/DB_Refresh_Restore_Script_${str_Timestamp_Key}.sh
 date_deb=`date +%Y-%m-%d" "%T"."%N`
 
 >${str_Dir_Temp}/DB_Refresh_Restore_Script_${str_Timestamp_Key}.sh
-psql -1 -t -d ${str_Target_DB} -v v_Target_DB="'${str_Target_DB}'" -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -f ${str_Qry} -o ${str_Output}  >/dev/null
+psql -1 -tAq -d ${str_Target_DB} -v v_Target_DB="'${str_Target_DB}'" -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -f ${str_Qry} -o ${str_Output}  >/dev/null
 rc_qry=$?
 
 f_trace $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
@@ -528,8 +531,8 @@ date_deb=`date +%Y-%m-%d" "%T"."%N`
 str_Output=${str_Dir_Log}/redistribute_${str_Timestamp_Key}.log
 str_Err=${str_Dir_Log}/redistribute_${str_Timestamp_Key}.err
 
-psql -1 -tXq -f ${str_Qry} -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -d ${str_Target_DB} | xargs  -P ${int_Nb_Thread} -d"\n"  -n 1 -I{} psql -a -d ${str_Target_DB} -c >${str_Output} 2>${str_Err} {}
-
+#psql -1 -tXq -f ${str_Qry} -v v_dump_timestampkey=${str_Timestamp_Key} -v ON_ERROR_STOP=1 -d ${str_Target_DB} | xargs  -P ${int_Nb_Thread} -d"\n"  -n 1 -I{} psql -a -d ${str_Target_DB} -c >${str_Output} 2>${str_Err} {}
+psql -1 -tXq -f ${str_Qry} -v v_dump_timestampkey=${str_Timestamp_Key}  -d ${str_Target_DB} | xargs  -P ${int_Nb_Thread} -d"\n"  -n 1 -I{} psql -a -d ${str_Target_DB} -c >${str_Output} 2>${str_Err} {}
 rc_qry=$?
 
 if [ -s ${str_Err} ]
