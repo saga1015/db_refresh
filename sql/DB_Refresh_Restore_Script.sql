@@ -7,13 +7,13 @@ select
 		then 'zcat ' || file_name || ' | '
 	else ''
 end
-|| 'PGOPTIONS="-c gp_session_role=utility" psql -1 -h '|| hostname || ' -p ' || port  || ' -d ' || :v_Target_DB || ' -U gpadmin -v ON_ERROR_STOP=1 ' ||
+|| 'PGOPTIONS="-c gp_session_role=utility" psql -h '|| hostname || ' -p ' || port  || ' -d ' || :v_Target_DB || ' -U gpadmin ' ||
 case
 	when substring(trim(file_name) from '...$') = '.gz'
 		then ''
 	else ' -f ' || file_name 
 end
-|| E'&\n'--|| E'''&\n'
+|| E'&\n'
 || 'plist['|| id_file ||']=$!'
 from (select row_number() over() as id_file,file_name
 	from db_refresh.refresh_list_dump_file

@@ -203,7 +203,7 @@ fi
 if [ $flag_DBREFRESH_SCHEMA_EXISTS -eq 0 ]
 then
 	echo `date +%Y-%m-%d" "%T ` "Step  1: Create db_refresh schema"
-	psql -d ${str_Target_DB} -f ${str_Dir_Sql}/DDL_db_refresh_GPDB6.sql >/dev/null
+	psql -d ${str_Target_DB} -f ${str_Dir_Sql}/DDL_db_refresh.sql >/dev/null
 fi
 
 ###################################################################################################
