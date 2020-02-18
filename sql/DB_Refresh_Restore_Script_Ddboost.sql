@@ -1,7 +1,7 @@
 select 
 'gpssh -h ' || hostname || ' -v -e ''' 
 ||'gpddboost --readFile --from-file=' || file_name || ' | '
-|| 'PGOPTIONS="-c gp_session_role=utility" psql -1 -h '|| hostname || ' -p ' || port  || ' -d ' || :v_Target_DB || ' -U gpadmin -v ON_ERROR_STOP=1 '
+|| 'PGOPTIONS="-c gp_session_role=utility" psql -h '|| hostname || ' -p ' || port  || ' -d ' || :v_Target_DB || ' -U gpadmin '
 || E'''&\n'
 || 'plist['|| id_file ||']=$!'
 from (select row_number() over() as id_file,file_name
