@@ -4,7 +4,7 @@ select 'select '''||nspname||'.'||relname||'|'''||'||count(*) from "'||nspname||
    where
       relkind='r'
       and relstorage in ('a','c','h')
-      and nspname not in ('gp_toolkit','information_schema') and nspname not like 'pg_%'
+      and nspname not in ('db_refresh', 'gp_toolkit','information_schema') and nspname not like 'pg_%'
       and not relhassubclass
    order by 1
 ;

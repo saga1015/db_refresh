@@ -294,22 +294,15 @@ str_Output=${str_Dir_Temp}/list_tables_${str_Timestamp_Key}.dat
 date_deb=`date +%Y-%m-%d" "%T"."%N`
 if [ "$flag_DDBOOST" == "1" ]
 then
-	gpdbrestore -t ${str_Timestamp_Key} -L --ddboost --redirect ${str_Target_DB}                          > ${str_Output_Tmp}
+	echo "ERROR: ddboost not supported by DB_Refresh_GPDB6. Use NFS"
+        f_trace_error_exit 1 ${str_Timestamp_Key} ${str_Step} "${date_deb}"
+        exit 1
 else
-	# remove db_dumps subfolder from root path
-	#gpdbrestore -t ${str_Timestamp_Key} -L -u ${str_Dir_Dump_Root/\/db_dumps*}  --redirect ${str_Target_DB} > ${str_Output_Tmp}
-	str_Qry=${str_Dir_Sql}/DB_Refresh_list_tables.sql
-	psql -AXt -d ${str_Target_DB} -f ${str_Qry} > ${str_Output}
-	sed -i "s/^/${str_Timestamp_Key}|/"  ${str_Output}
+        python DB_Refresh_List_tables.py ${str_Dir_Dump}/${str_Master_Dumpfile} ${str_Timestamp_Key} > ${str_Output}
 fi
 rc_qry=$?
 f_trace_error_exit $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
 
-#chmod 777 ${str_Output_Tmp}
-#grep ":-Table " ${str_Output_Tmp} | sed -e "s/^/&${str_Timestamp_Key}|/g"	>	${str_Output}
-
-#rc_qry=$?
-#f_trace_error_exit $rc_qry ${str_Timestamp_Key} ${str_Step} "${date_deb}"
 
 chmod 777 ${str_Output}
 int_Nb_Tables=`cat ${str_Output}|wc -l`
